@@ -1,0 +1,108 @@
+%{
+    /* definitions */
+    #include <stdio.h>
+    #include <string.h>
+    #include <errno.h>
+    #include <stdlib.h>
+
+    typedef struct {
+        char *name;
+        int value;
+    } Variable;
+
+    int result = 0;
+    Variable variables[100];
+    int var_count = 0;
+%}
+
+%union {
+    int num;
+    char sym;
+}
+
+%token EOL
+%token<num> NUMBER
+%type<num> exp
+%token<sym> a-z
+%token RESULT
+%token<sym> VARIABLE
+
+%left '+' '-'
+%left '*' '/'
+
+/* rules */
+%%
+
+input:
+|   input line;
+
+line: 
+    | exp '\n'
+    | RESULT '\n' //{ printf("Result: \n", result); }
+    | VARIABLE '=' exp EOL {
+        int found = 0;
+        for (int i = 0; i < var_count; i++){
+            if (strcmp($1, variables[i].name) == 0){
+                variables[i].value = $3;
+                found = 1;
+                break;
+            }
+        }
+        if (found == 0) {
+            variables[var_count].name = strdup($1);
+            variables[var_count].value = $3;
+            var_count++;
+        }
+        result = 3;
+    }
+    ;
+
+exp: 
+    NUMBER { result = $1; }
+    | VARIABLE {
+        int found = 0;
+        for (int i = 0; i < var_count; i++){
+            if (strcmp($1, variables[i].name) == 0){
+                result = variables[i].value;
+                found = 1;
+                break;
+            }
+        }
+        printf("Variable does not exist", $1);
+    }
+|   exp '+' exp { result = $1 + $3; };
+|   exp '-' exp { result = $1 - $3; };
+|   exp '*' exp { result = $1 * $3; };
+|   exp '/' exp { result = $1 / $3; };
+//|   '(' exp ')' { result = exp; }
+//|   a-z '=' exp { result = $1 = $3; };
+|   VARIABLE '=' exp {
+        int found = 0;
+        for (int i = 0; i < var_count; i++){
+            if (strcmp($1, variables[i].name) == 0) {
+                variables[i] = $3;
+                found = 1;
+                break;
+            }
+        }
+        if (found == 0){
+            variables[var_count].name == strdup[$1];
+            variables[var_count].value == $3;
+            found = 1;
+            break;
+        }
+        result = 3;
+}
+
+%%
+
+int main() {
+    printf("Enter math: \n");
+    yyparse();
+    return 0;
+}
+
+yyerror(char* s) {
+    printf("ERROR: %s\n", s);
+    return 0;
+}
