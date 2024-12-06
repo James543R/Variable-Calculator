@@ -1,105 +1,91 @@
 %{
     /* definitions */
     #include <stdio.h>
-    #include <string.h>
-    #include <errno.h>
     #include <stdlib.h>
+    #include "calc.tab.h"
 
-    typedef struct {
-        char *name;
-        int value;
-    } Variable;
+    extern int yylex(void);
+    extern int yyerror(const char *s);
 
-    int result = 0;
-    Variable variables[100];
-    int var_count = 0;
+    
+typedef struct {
+    char* name;
+    int value;
+} Variable;
+
+Variable variables[10];
+int var_count = 0;
+
+void assign_variable(char* name, int value);
+int variable_value(char* name);
+
 %}
 
 %union {
     int num;
-    char sym;
+    char* sym;
 }
 
 %token EOL
 %token<num> NUMBER
 %type<num> exp
-%token<sym> a-z
-%token RESULT
 %token<sym> VARIABLE
 
 %left '+' '-'
 %left '*' '/'
+%right '='
 
-/* rules */
 %%
 
 input:
-|   input line;
-
-line: 
-    | exp '\n'
-    | RESULT '\n' //{ printf("Result: \n", result); }
-    | VARIABLE '=' exp EOL {
-        int found = 0;
-        for (int i = 0; i < var_count; i++){
-            if (strcmp($1, variables[i].name) == 0){
-                variables[i].value = $3;
-                found = 1;
-                break;
-            }
-        }
-        if (found == 0) {
-            variables[var_count].name = strdup($1);
-            variables[var_count].value = $3;
-            var_count++;
-        }
-        result = 3;
-    }
+      exp EOL { printf("Result: %d\n", $1); }
+    | input exp EOL { printf("Result: %d\n", $2); }  
+    | exp ';' EOL { printf("Result: %d\n", $1); }
+    | input exp ';' EOL { printf("Result: %d\n", $2); }
+    | VARIABLE '=' exp EOL { assign_variable($1, $3); }
+    | input VARIABLE '=' exp EOL { assign_variable($2, $4); }
     ;
 
-exp: 
-    NUMBER { result = $1; }
-    | VARIABLE {
-        int found = 0;
-        for (int i = 0; i < var_count; i++){
-            if (strcmp($1, variables[i].name) == 0){
-                result = variables[i].value;
-                found = 1;
-                break;
-            }
-        }
-        printf("Variable does not exist", $1);
-    }
-|   exp '+' exp { result = $1 + $3; };
-|   exp '-' exp { result = $1 - $3; };
-|   exp '*' exp { result = $1 * $3; };
-|   exp '/' exp { result = $1 / $3; };
-//|   '(' exp ')' { result = exp; }
-//|   a-z '=' exp { result = $1 = $3; };
-|   VARIABLE '=' exp {
-        int found = 0;
-        for (int i = 0; i < var_count; i++){
-            if (strcmp($1, variables[i].name) == 0) {
-                variables[i] = $3;
-                found = 1;
-                break;
-            }
-        }
-        if (found == 0){
-            variables[var_count].name == strdup[$1];
-            variables[var_count].value == $3;
-            found = 1;
-            break;
-        }
-        result = 3;
-}
+exp:
+    NUMBER { $$ = $1; }
+    | exp '+' exp { $$ = $1 + $3; }
+    | exp '-' exp { $$ = $1 - $3; }
+    | exp '*' exp { $$ = $1 * $3; }
+    | exp '/' exp { $$ = $1 / $3; }
+    | '(' exp ')' { $$ = $2; }
+    //| VARIABLE '+' VARIABLE { $$ = variable_value($1) + variable_value($3); }
+    ;
 
 %%
 
-int main() {
-    printf("Enter math: \n");
-    yyparse();
+void assign_variable (char* name, int value) {
+    for (int i = 0; i < var_count; i++) {
+        if (variables[i].name == name) {
+            variables[i].value = value;
+        }
+    }
+    variables[var_count].name = name;
+    variables[var_count].value = value;
+    var_count++;
+}
+
+int variable_value (char* name) {
+    for (int i = 0; i < var_count; i++) {
+        if (variables[i].name == name) {
+            return variables[i].value;
+        }
+    }
+    yyerror(name);
+}
+
+int yyerror(const char *s) {
+    fprintf(stderr, "ERROR: %s\n", s);
     return 0;
+}
+
+int main() {
+    printf("Enter math:\n");
+    return yyparse();
 }
 
 yyerror(char* s) {
