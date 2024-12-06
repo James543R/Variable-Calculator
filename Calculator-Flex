@@ -1,5 +1,4 @@
 %{
-//To run code type: flex calc.l => bison calc.y => gcc -o calc calc.tab.c lex.yy.c -lfl  => ./calc
 // C code declarations and headers
     #include <stdio.h>
     #include <string.h>
@@ -8,12 +7,12 @@
     #include "calc.tab.h"
 %}
 
-
 %option noyywrap
 
 %%
 
-"result" { return RESULT; }
+[ \t]+ /* Ignores white space */
+
 [0-9]+ { yylval.num = atoi(yytext); return NUMBER; }
 [a-zA-Z]+ { yylval.sym = strdup(yytext); return VARIABLE; }
 
@@ -23,8 +22,10 @@
 "/" { return '/'; }
 "(" { return '('; }
 ")" { return ')'; }
+";" { return ';'; }
+"=" { return '='; }
 
 \n {return EOL;}
-. {}
+. { printf("Error: %s\n", yytext); }
 
 %%
