@@ -14,7 +14,9 @@
 [ \t]+ /* Ignores white space */
 
 [0-9]+ { yylval.num = atoi(yytext); return NUMBER; }
+"print" { return PRINT; }
 [a-zA-Z]+ { yylval.sym = strdup(yytext); return VARIABLE; }
+
 
 "+" { return '+'; }
 "-" { return '-'; }
@@ -22,8 +24,8 @@
 "/" { return '/'; }
 "(" { return '('; }
 ")" { return ')'; }
-";" { return ';'; }
 "=" { return '='; }
+";" { return ';'; }
 
 \n {return EOL;}
 . { printf("Error: %s\n", yytext); }
