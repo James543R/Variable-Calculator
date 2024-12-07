@@ -3,26 +3,26 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "calc.tab.h"
+    #include <string.h>
 
     extern int yylex(void);
     extern int yyerror(const char *s);
-
     
-typedef struct {
-    char* name;
-    int value;
-} Variable;
+    typedef struct {
+        char* name;
+        double value;
+    } Variable;
 
-Variable variables[10];
-int var_count = 0;
+    Variable variables[100];
+    int var_count = 0;
 
-void assign_variable(char* name, int value);
-int variable_value(char* name);
+    void assign_variable(char* name, double value);
+    double variable_value(char* name);
 
 %}
 
 %union {
-    int num;
+    double num;
     char* sym;
 }
 
@@ -30,38 +30,45 @@ int variable_value(char* name);
 %token<num> NUMBER
 %type<num> exp
 %token<sym> VARIABLE
+%type<num> line
+%token PRINT
 
+%right '='
 %left '+' '-'
 %left '*' '/'
-%right '='
+
 
 %%
 
 input:
-      exp EOL { printf("Result: %d\n", $1); }
-    | input exp EOL { printf("Result: %d\n", $2); }  
-    | exp ';' EOL { printf("Result: %d\n", $1); }
-    | input exp ';' EOL { printf("Result: %d\n", $2); }
-    | VARIABLE '=' exp EOL { assign_variable($1, $3); }
-    | input VARIABLE '=' exp EOL { assign_variable($2, $4); }
+    | input line
+    ;
+
+line:
+    exp EOL
+    | exp ';' { $$ = $1; }
     ;
 
 exp:
     NUMBER { $$ = $1; }
-    | exp '+' exp { $$ = $1 + $3; }
-    | exp '-' exp { $$ = $1 - $3; }
-    | exp '*' exp { $$ = $1 * $3; }
-    | exp '/' exp { $$ = $1 / $3; }
+    | exp '+' exp { $$ = $1 + $3; printf("Result: %g\n", $$); }
+    | exp '-' exp { $$ = $1 - $3; printf("Result: %g\n", $$); }
+    | exp '*' exp { $$ = $1 * $3; printf("Result: %g\n", $$); }
+    | exp '/' exp { $$ = $1 / $3; printf("Result: %g\n", $$); }
     | '(' exp ')' { $$ = $2; }
-    //| VARIABLE '+' VARIABLE { $$ = variable_value($1) + variable_value($3); }
+    | VARIABLE '=' exp { $$ = $3; assign_variable($1, $3); printf("New assignment: %s = %g\n", $1, $3); }
+    | VARIABLE '=' exp ';' { $$ = $3; assign_variable($1, $3); }
+    | VARIABLE { $$ = variable_value($1); }
+    | PRINT VARIABLE { printf("Result: %s = %g\n", $2, variable_value($2)); }
     ;
 
 %%
 
-void assign_variable (char* name, int value) {
+void assign_variable (char* name, double value) {
     for (int i = 0; i < var_count; i++) {
-        if (variables[i].name == name) {
+        if (strcmp(variables[i].name, name) == 0) {
             variables[i].value = value;
+            return;
         }
     }
     variables[var_count].name = name;
@@ -69,13 +76,14 @@ void assign_variable (char* name, int value) {
     var_count++;
 }
 
-int variable_value (char* name) {
+double variable_value (char* name) {
     for (int i = 0; i < var_count; i++) {
-        if (variables[i].name == name) {
+        if (strcmp(variables[i].name, name) == 0) {
             return variables[i].value;
         }
     }
-    yyerror(name);
+    yyerror("Undefined Variable");
+    return 0;
 }
 
 int yyerror(const char *s) {
@@ -86,9 +94,4 @@ int yyerror(const char *s) {
 int main() {
     printf("Enter math:\n");
     return yyparse();
-}
-
-yyerror(char* s) {
-    printf("ERROR: %s\n", s);
-    return 0;
 }
