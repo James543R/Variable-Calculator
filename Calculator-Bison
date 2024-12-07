@@ -4,6 +4,8 @@
     #include <stdlib.h>
     #include "calc.tab.h"
     #include <string.h>
+    #include <math.h>
+    #include <stdbool.h>
 
     extern int yylex(void);
     extern int yyerror(const char *s);
@@ -18,6 +20,11 @@
 
     void assign_variable(char* name, double value);
     double variable_value(char* name);
+    void list();
+    double powers(double value, int power);
+    void clear();
+    void print(char* name);
+    bool variable_exists(char* name);
 
 %}
 
@@ -26,14 +33,12 @@
     char* sym;
 }
 
-%token EOL
+%token EOL PRINT LIST SQRT '^' CLEAR
 %token<num> NUMBER
 %type<num> exp
 %token<sym> VARIABLE
-%type<num> line
-%token PRINT
 
-%right '='
+%right '=' '^'
 %left '+' '-'
 %left '*' '/'
 
@@ -41,12 +46,9 @@
 %%
 
 input:
-    | input line
-    ;
-
-line:
     exp EOL
     | exp ';' { $$ = $1; }
+    | input exp
     ;
 
 exp:
@@ -54,12 +56,23 @@ exp:
     | exp '+' exp { $$ = $1 + $3; printf("Result: %g\n", $$); }
     | exp '-' exp { $$ = $1 - $3; printf("Result: %g\n", $$); }
     | exp '*' exp { $$ = $1 * $3; printf("Result: %g\n", $$); }
-    | exp '/' exp { $$ = $1 / $3; printf("Result: %g\n", $$); }
+    | exp '/' exp {
+        if($3 == 0){
+            yyerror("DIVISION BY ZERO");
+        }
+        else{
+            $$ = $1 / $3; printf("Result: %g\n", $$); 
+        }
+    }
+    | exp '^' exp { $$ = powers($1, $3); printf("Result: %g\n", $$); }
+    | SQRT exp EOL { $$ = sqrt($2); printf("Result: %g\n", $$); }
     | '(' exp ')' { $$ = $2; }
-    | VARIABLE '=' exp { $$ = $3; assign_variable($1, $3); printf("New assignment: %s = %g\n", $1, $3); }
-    | VARIABLE '=' exp ';' { $$ = $3; assign_variable($1, $3); }
     | VARIABLE { $$ = variable_value($1); }
-    | PRINT VARIABLE { printf("Result: %s = %g\n", $2, variable_value($2)); }
+    | VARIABLE '=' exp { $$ = $3; assign_variable($1, $3);  }
+    | VARIABLE '=' exp ';' { $$ = $3; assign_variable($1, $3); }
+    | PRINT VARIABLE { print($2); }
+    | LIST { list(); }
+    | CLEAR { clear(); }
     ;
 
 %%
@@ -68,12 +81,22 @@ void assign_variable (char* name, double value) {
     for (int i = 0; i < var_count; i++) {
         if (strcmp(variables[i].name, name) == 0) {
             variables[i].value = value;
+            printf("%s's value overwritten: %s = %g\n", name, name, value);
             return;
         }
     }
     variables[var_count].name = name;
     variables[var_count].value = value;
     var_count++;
+    printf("New assignment: %s = %g\n", name, value);
+}
+
+double powers(double value, int power){
+    double new_value = value;
+    for(int i = 0; i < power; i++) {
+        new_value *= new_value;
+    }
+    return new_value;
 }
 
 double variable_value (char* name) {
@@ -82,8 +105,46 @@ double variable_value (char* name) {
             return variables[i].value;
         }
     }
-    yyerror("Undefined Variable");
-    return 0;
+    yyerror("UNDEFINED VARIABLE");
+}
+
+void list() {
+    printf("List of all variables and their values:\n");
+    if(var_count == 0){
+        printf("ERROR: NO CURRENTLY ASSIGNED VARIABLES\n");
+        return;
+    }
+    else{
+        for(int i = 0; i < var_count; i++){
+            printf("\t%s = %g\n", variables[i].name, variables[i].value);
+        }
+    }
+}
+
+void clear() {
+    for(int i = 0; i < var_count; i++) {
+        variables[i].name = NULL;
+    }
+    printf("All variable names cleared\n");
+    var_count = 0;
+    return;
+}
+
+void print(char* name){
+    if(variable_exists(name)){
+        printf("Result: %s = %g\n", name, variable_value(name));
+    }
+}
+
+bool variable_exists(char* name){
+    for(int i = 0; i < var_count; i++){
+        if(strcmp(variables[i].name, name) == 0) {
+            return true;
+        }
+    else {
+        return false;
+        }
+    }
 }
 
 int yyerror(const char *s) {
@@ -91,6 +152,10 @@ int yyerror(const char *s) {
     return 0;
 }
 
+int main() {
+    printf("Enter mathematical expression/s:\n");
+    return yyparse();
+}
 int main() {
     printf("Enter math:\n");
     return yyparse();
