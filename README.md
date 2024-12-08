@@ -12,7 +12,23 @@ It supports operations such as addition, subtraction, multiplication, and divisi
 ## 💻 Installation
 To run this locally:
 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/James543R/Variable-Calculator.git
+   ```
+
+2. Navigate into the directory:
+   ```bash
+   cd Variable-Calculator
+   ```
+
 3. Install dependencies:
 - Bison
 - Flex
 - C Standard Library
+
+4. Run the project:
+   ```bash
+   make
+   ./calc
+   ```
