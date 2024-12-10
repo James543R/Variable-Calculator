@@ -44,20 +44,20 @@
 %%
 
 input:
-    | input exp EOL
+    | input exp EOL { printf("Result: %g\n", $2); }
     ;
 
 exp:
     NUMBER { $$ = $1; }
-    | exp '+' exp { $$ = $1 + $3; printf("Result: %g\n", $$); }
-    | exp '-' exp { $$ = $1 - $3; printf("Result: %g\n", $$); }
-    | exp '*' exp { $$ = $1 * $3; printf("Result: %g\n", $$); }
+    | exp '+' exp { $$ = $1 + $3; }
+    | exp '-' exp { $$ = $1 - $3; }
+    | exp '*' exp { $$ = $1 * $3; }
     | exp '/' exp {
         if($3 == 0){
             yyerror("DIVISION BY ZERO");
         }
         else{
-            $$ = $1 / $3; printf("Result: %g\n", $$); 
+            $$ = $1 / $3; 
         }
     }
     | '(' exp ')' { $$ = $2; }
