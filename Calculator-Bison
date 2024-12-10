@@ -49,6 +49,7 @@ input:
         if(has_var == 0){
             printf("Result: %g\n", $2); 
         }
+        has_var = 0;
     }
     ;
 
