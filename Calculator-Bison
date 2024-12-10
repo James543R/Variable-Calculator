@@ -35,7 +35,6 @@
 %token<num> NUMBER
 %type<num> exp
 %token<sym> VARIABLE
-%type<num> line
 
 %right '=' '^'
 %left '+' '-'
