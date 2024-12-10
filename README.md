@@ -29,8 +29,6 @@ To run this locally:
 
 4. Run the project:
    ```bash
-   Compile the Flex file (calc.l)
-   Compile the Bison file (calc.y)
    make
    ./calc
    ```
