@@ -16,6 +16,7 @@
 
     Variable variables[100];
     int var_count = 0;
+    int has_var = 0;
 
     void assign_variable(char* name, double value);
     double variable_value(char* name);
@@ -44,7 +45,11 @@
 %%
 
 input:
-    | input exp EOL { printf("Result: %g\n", $2); }
+    | input exp EOL { 
+        if(has_var == 0){
+            printf("Result: %g\n", $2); 
+        }
+    }
     ;
 
 exp:
@@ -74,6 +79,7 @@ void assign_variable (char* name, double value) {
     for (int i = 0; i < var_count; i++) {
         if (strcmp(variables[i].name, name) == 0) {
             variables[i].value = value;
+            has_var = 1;
             printf("%s's value overwritten: %s = %g\n", name, name, value);
             return;
         }
@@ -81,6 +87,7 @@ void assign_variable (char* name, double value) {
     variables[var_count].name = name;
     variables[var_count].value = value;
     var_count++;
+    has_var = 1;
     printf("New assignment: %s = %g\n", name, value);
 }
 
