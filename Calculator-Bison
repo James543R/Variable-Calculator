@@ -45,11 +45,7 @@
 %%
 
 input:
-    | input line
-    ;
-
-line:
-    exp EOL
+    | input exp EOL
     ;
 
 exp:
