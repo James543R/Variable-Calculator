@@ -160,7 +160,3 @@ int main() {
     printf("Enter mathematical expression/s:\n");
     return yyparse();
 }
-int main() {
-    printf("Enter math:\n");
-    return yyparse();
-}
