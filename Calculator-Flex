@@ -4,7 +4,6 @@
     #include <string.h>
     #include <errno.h>
     #include <stdlib.h>
-    #include <math.h>
     #include "calc.tab.h"
 %}
 
@@ -23,7 +22,6 @@
 "-" { return '-'; }
 "*" { return '*'; }
 "/" { return '/'; }
-"^" { return '^'; }
 "(" { return '('; }
 ")" { return ')'; }
 "=" { return '='; }
