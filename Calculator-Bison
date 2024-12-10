@@ -17,6 +17,7 @@
     Variable variables[100];
     int var_count = 0;
     int has_var = 0;
+    int dont_print = 0;
 
     void assign_variable(char* name, double value);
     double variable_value(char* name);
@@ -24,6 +25,7 @@
     void clear();
     void print(char* name);
     bool variable_exists(char* name);
+    void should_print();
 
 %}
 
@@ -32,7 +34,7 @@
     char* sym;
 }
 
-%token EOL PRINT LIST CLEAR
+%token EOL PRINT LIST CLEAR DONTPRINT
 %token<num> NUMBER
 %type<num> exp
 %token<sym> VARIABLE
@@ -72,6 +74,7 @@ exp:
     | PRINT VARIABLE { print($2); }
     | LIST { list(); }
     | CLEAR { clear(); }
+    | DONTPRINT { should_print(); }
     ;
 
 %%
@@ -81,7 +84,9 @@ void assign_variable (char* name, double value) {
         if (strcmp(variables[i].name, name) == 0) {
             variables[i].value = value;
             has_var = 1;
-            printf("%s's value overwritten: %s = %g\n", name, name, value);
+            if(dont_print == 0){
+                printf("%s's value overwritten: %s = %g\n", name, name, value);
+            }
             return;
         }
     }
@@ -89,7 +94,9 @@ void assign_variable (char* name, double value) {
     variables[var_count].value = value;
     var_count++;
     has_var = 1;
-    printf("New assignment: %s = %g\n", name, value);
+    if(dont_print == 0){
+        printf("New assignment: %s = %g\n", name, value);
+    }
 }
 
 double variable_value (char* name) {
@@ -99,6 +106,7 @@ double variable_value (char* name) {
         }
     }
     yyerror("UNDEFINED VARIABLE");
+    return 0;
 }
 
 void list() {
@@ -126,6 +134,7 @@ void clear() {
 void print(char* name){
     if(variable_exists(name)){
         printf("Result: %s = %g\n", name, variable_value(name));
+        has_var = 1;
     }
 }
 
@@ -134,10 +143,12 @@ bool variable_exists(char* name){
         if(strcmp(variables[i].name, name) == 0) {
             return true;
         }
-    else {
-        return false;
-        }
     }
+    return false;
+}
+
+void should_print(){
+    dont_print = 1;
 }
 
 int yyerror(const char *s) {
